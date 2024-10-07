@@ -33,17 +33,42 @@ class AuthController extends Controller
         // $this->middleware('auth');
     }
 
-    public function generateMaldoID()
+    public function generateRefCode()
     {
         $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        $maldo_id = '';
+        $RefCode = '';
 
         for ($i = 0; $i < 6; $i++) {
             $index = rand(0, strlen($chars) - 1);
-            $maldo_id .= $chars[$index];
+            $RefCode .= $chars[$index];
         }
 
-        return "maldo" . $maldo_id;
+        return "Ref" . $RefCode;
+    }
+
+
+    public function handleReferral($referral_id)
+    {
+        $referral = User::find($referral_id);
+
+        $referred_by_user_id_1 = null;
+        $referred_by_user_id_2 = null;
+
+        if ($referral) {
+            $referred_by_user_id_1 = $referral->id;
+
+            if ($referral->referral_by) {
+                $referral_level_2 = User::find($referral->referral_by);
+                if ($referral_level_2) {
+                    $referred_by_user_id_2 = $referral_level_2->id;
+                }
+            }
+        }
+
+        return [
+            'referred_by_user_id_1' => $referred_by_user_id_1,
+            'referred_by_user_id_2' => $referred_by_user_id_2
+        ];
     }
 
 
@@ -63,6 +88,7 @@ class AuthController extends Controller
         ], 200);
     }
 
+
     //create User account
     public function createAccount(Request $request)
     {
@@ -77,7 +103,7 @@ class AuthController extends Controller
             'referral_by' => 'nullable|string|exists:users,referral_code',
         ]);
 
-        // if there is errors  with the validation, return the errors
+        // if there are errors with the validation, return the errors
         if ($attr->fails()) {
             return response()->json([
                 'status' => 'error',
@@ -85,16 +111,20 @@ class AuthController extends Controller
             ], 422);
         }
 
+        $referral_info = [
+            'referred_by_user_id_1' => null,
+            'referred_by_user_id_2' => null
+        ];
+
         if ($request->referral_by) {
             $referral = User::where('referral_code', $request->referral_by)->first();
             if ($referral) {
-                $request->merge(['referral_by' => $referral->id]);
-                //call function to reward user
-                $this->generalService->rewardRefUser($referral->id, 20);
+                // Retrieve referral chain data
+                $referral_info = $this->handleReferral($referral->id);
             }
         }
 
-        $maldo_id = $this->generateMaldoID();
+        $RefCode = $this->generateRefCode();
 
         $user = User::create([
             'password' => Hash::make($request->password),
@@ -103,10 +133,9 @@ class AuthController extends Controller
             'email' => $request->email,
             'phone_number' => $request->phone_number,
             'country' => $request->country,
-            'maldorini_id' => $maldo_id,
-            // 'referral_code' => $this->generalService->generateReferralCode($request->first_name),
-            'referral_by' => $request->referral_by ?? null,
-            'referral_code' => $maldo_id,
+            'referral_code' => $RefCode,
+            'referred_by_user_id_1' => $referral_info['referred_by_user_id_1'] ?? null,
+            'referred_by_user_id_2' => $referral_info['referred_by_user_id_2'] ?? null,
             'username' => $request->username ?? $request->first_name . $request->last_name . rand(1000, 9999),
             'user_role_id' => 2,
         ]);
@@ -114,12 +143,7 @@ class AuthController extends Controller
         $token = $user->createToken('authToken')->plainTextToken;
         $this->generateOtp($request->email);
 
-        if ($request->maldoId) {
-            $this->generalService->rewardRefUser($user->id, 30);
-        }
-
         ActivityLogger::log('User', 'User Registration', 'User has successfully registered', $user->id);
-
 
         return response()->json([
             'message' => 'success',
@@ -127,6 +151,7 @@ class AuthController extends Controller
             'data' => $user
         ], 201);
     }
+
 
 
     public function checkSuspendServed($user){
@@ -244,7 +269,7 @@ class AuthController extends Controller
             $password .= $chars[$index];
         }
 
-        $maldoId = $this->generateMaldoID();
+        $maldoId = $this->generateRefCode();
 
         $user = User::create([
             'password' => Hash::make($password),
@@ -255,7 +280,6 @@ class AuthController extends Controller
             'user_role_id' => 2,
             'is_social' => true,
             'social_type' => $request->social_type,
-            'maldorini_id' => $maldoId,
             'username' => $request->username ?? $request->first_name . $request->last_name . rand(1000, 9999) . $maldoId,
         ]);
 
@@ -336,8 +360,8 @@ class AuthController extends Controller
             $user = $this->validateOTP($request->email, $request->otp);
 
             // Clear OTP and expiration timestamp as it is no longer needed
-            $user->otp = null;
-            $user->otp_expires_at = null;
+            $user->auth_otp = null;
+            $user->auth_otp_expires_at = null;
 
             // Set email verification timestamp
             $user->email_verified_at = now();
@@ -405,8 +429,8 @@ class AuthController extends Controller
 
         if ($user) {
             // Set the OTP and expiration timestamp
-            $user->otp = $randomDigits;
-            $user->otp_expires_at = Carbon::now()->addMinutes(5);
+            $user->auth_otp = $randomDigits;
+            $user->auth_otp_expires_at = Carbon::now()->addMinutes(5);
             $user->save();
         }
 
@@ -431,12 +455,12 @@ class AuthController extends Controller
             throw new Exception('Email does not exist', 404);
         }
 
-        if ($user->otp !== $otp) {
+        if ($user->auth_otp !== $otp) {
             throw new Exception('OTP is not correct', 400);
         }
 
         // Check if OTP has expired
-        if ($user->otp_expires_at && now()->gt($user->otp_expires_at)) {
+        if ($user->auth_otp_expires_at && now()->gt($user->auth_otp_expires_at)) {
             throw new Exception('OTP has expired', 422);
         }
 

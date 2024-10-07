@@ -9,6 +9,8 @@ class UserLevel extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'name'
+        'name',
+        'description',
+        ''
     ];
 }

@@ -54,13 +54,6 @@ class GeneralService
         return $encrypt;
     }
 
-    public function rewardRefUser($id, $prize){
-        $user = User::find($id);
-        $user->mdx_balance += $prize;
-        $user->referral_code_used += 1;
-        $user->save();
-    }
-
 
     //Upload Files to AWS
     public function uploadFile($file, $type, $subtype, $identifier): JsonResponse|string
@@ -124,31 +117,5 @@ class GeneralService
         return $contentTypes[$extension] ?? 'application/octet-stream';
     }
 
-
-    public function rewardPoster(Post $post, string $interactionType)
-    {
-        $user = $post->user;
-        $rewardAmount = 0;
-
-        switch ($interactionType) {
-            case 'comment':
-                $rewardAmount = 0.0010;
-                break;
-            case 'like':
-                $rewardAmount = 0.0005;
-                break;
-            case 'dislike':
-                $rewardAmount = -0.0002;
-                break;
-            default:
-                return;
-        }
-
-        // Update the user's MDX balance
-        $user->mdx_balance += $rewardAmount;
-        $user->save();
-
-        ActivityLogger::log('reward', 'reward', 'User rewarded '.$rewardAmount .'MDX for ' . $interactionType, $user->id, ['amount' => $rewardAmount]);
-    }
 
 }
