@@ -26,9 +26,6 @@ Route::prefix('v1')->group(callback: function () {
     });
 
     Route::prefix('admin')->group(function () {
-        // Route::post('/create-level', [AdminController::class, 'createLevel']);
-        // Route::get('/get-levels/{id?}', [AdminController::class, 'getLevels']);
-        // Route::put('/update-level/{id}', [AdminController::class, 'updateLevel']);
         Route::prefix('levels')->group(function () {
             Route::post('/', [AdminController::class, 'createLevel']);
             Route::get('/{id?}', [AdminController::class, 'getLevels']);
@@ -36,16 +33,15 @@ Route::prefix('v1')->group(callback: function () {
             Route::delete('/{id}', [AdminController::class, 'deleteLevel']);
         });
 
-        // Route::post('/levels', [AdminController::class, 'createLevel']);
-
-        // // Get all Levels or a specific Level by ID
-        // Route::get('/levels/{id?}', [AdminController::class, 'getLevels']);
-
-        // // Update a specific Level by ID
-        // Route::put('/levels/{id}', [AdminController::class, 'updateLevel']);
-
-        // // Delete a specific Level by ID
-        // Route::delete('/levels/{id}', [AdminController::class, 'deleteLevel']);
+        Route::prefix('customer')->group(function () {
+            Route::get('/activities/{id?}', [AdminController::class, 'getUserActivities'])->name('admin.get-users-activity');
+            Route::get('/metadata', [AdminController::class, 'getUserMetadata'])->name('admin.get-users-metadata');
+            Route::get('/{id?}', [AdminController::class, 'getUsers'])->name('admin.get-user');
+            Route::delete('/delete/{id}', [AdminController::class, 'deleteUser'])->name('user.close-account');
+            Route::post('/restore/{id}', [AdminController::class, 'restoreUser'])->name('user.restore-account');
+            Route::post('/suspend/{id}', [AdminController::class, 'suspendUser'])->name('user.suspend-account');
+            Route::get('/analytics-month-chart', [AdminController::class, 'revenueAnalyticsChart']);
+        });
     });
 
 });
