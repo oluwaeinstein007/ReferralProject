@@ -132,6 +132,7 @@ class AuthController extends Controller
             'last_name' => $request->last_name,
             'email' => $request->email,
             'phone_number' => $request->phone_number,
+            'whatsapp_number' => $request->whatsapp_number,
             'country' => $request->country,
             'referral_code' => $RefCode,
             'referred_by_user_id_1' => $referral_info['referred_by_user_id_1'] ?? null,
