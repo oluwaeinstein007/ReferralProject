@@ -49,6 +49,14 @@ Route::prefix('v1')->group(callback: function () {
             // Route::post('withdrawal/verify', [WithdrawalController::class, 'verifyWithdrawalToken']);
             // Route::post('withdrawal/update', [WithdrawalController::class, 'updateWithdrawalStatus']);
 
+            Route::prefix('bank')->group(function () {
+                Route::post('/create', [UserController::class, 'createBankDetails']);
+                Route::get('/show/{id}', [UserController::class, 'showBankDetails']);
+                Route::put('/update/{id}', [UserController::class, 'updateBankDetails']);
+                Route::delete('/delete/{id}', [UserController::class, 'deleteBankDetails']);
+            });
+
+
             Route::prefix('products')->group(function () {
                 Route::get('/', [ProductController::class, 'index']);
                 Route::post('/', [ProductController::class, 'store']);

@@ -15,7 +15,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
 use GuzzleHttp\Client;
-use App\Models\Post;
 
 class GeneralService
 {
@@ -186,6 +185,29 @@ class GeneralService
             $admin->save();
         }
     }
+
+
+    public function getUserWithHighestRankOrProportion($amount, $isProportion = false)
+    {
+        if ($isProportion) {
+            $refRequired = $amount * 0.30;  // 30% of the amount
+            $taskRequired = $amount * 0.70;  // 70% of the amount
+
+            // Query for 30/70 proportion
+            $user = User::where('ref_balance', '>=', $refRequired)
+                    ->where('task_balance', '>=', $taskRequired)
+                    ->orderBy('ref_sort', 'desc')
+                    ->first();
+        } else {
+            // Query for ref_balance + task_balance >= $amount
+            $user = User::whereRaw('(ref_balance + task_balance) >= ?', [$amount])
+                    ->orderBy('ref_sort', 'desc')
+                    ->first();
+        }
+
+        return $user;
+    }
+
 
 
 }

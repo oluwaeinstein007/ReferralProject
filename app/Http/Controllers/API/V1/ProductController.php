@@ -19,7 +19,7 @@ class ProductController extends Controller
             'status' => 'nullable|in:submitted,approved,denied',
             'visibility' => 'nullable|in:unpublished,private,public',
             'reward_amount' => 'nullable|integer',
-            'user_id' => 'required|exists:users,id'
+            // 'user_id' => 'required|exists:users,id'
         ]);
 
         $product = new Product();
@@ -31,7 +31,7 @@ class ProductController extends Controller
         $product->status = $request->status ?? 'submitted';
         $product->visibility = $request->visibility ?? 'public';
         $product->reward_amount = $request->reward_amount;
-        $product->user_id = $request->user_id;
+        $product->user_id = auth()->user()->id;
         $product->save();
 
         return response()->json(['message' => 'Product was created', 'data' => $product], 201);

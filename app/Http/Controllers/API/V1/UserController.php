@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Country;
 use App\Models\Notification;
 use App\Models\User;
 use App\Services\ActivityLogger;
@@ -92,5 +93,91 @@ class UserController extends Controller
             'message' => 'Notification status changed successfully',
         ], 200);
     }
+
+
+
+    // Store user with bank details
+    public function createBankDetails(Request $request)
+    {
+        $validatedData = $request->validate([
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:11',
+            'bank_country_code' => 'nullable|string|max:3',
+        ]);
+
+        $country_id = Country::where('alpha_3_code', $validatedData['bank_country_code'])->first()->id;
+        $validatedData['bank_country_id'] = $country_id;
+        $user = auth()->user();
+        $user->update($validatedData);
+
+        return response()->json([
+            'message' => 'User created successfully',
+            'data' => $user
+        ], 201);
+    }
+
+
+    public function showBankDetails($id)
+    {
+        $user = User::findOrFail($id);
+        return response()->json($user);
+    }
+
+
+    public function updateBankDetails(Request $request, $id)
+    {
+        $validatedData = $request->validate([
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:11',
+            'bank_country_code' => 'nullable|string|max:3',
+        ]);
+
+        $country_id = Country::where('alpha_3_code', $validatedData['bank_country_code'])->first()->id;
+        $validatedData['bank_country_id'] = $country_id;
+        $user = User::findOrFail($id);
+        $user->update($validatedData);
+
+        return response()->json([
+            'message' => 'User bank details updated successfully',
+            'data' => $user
+        ]);
+    }
+
+
+    public function deleteBankDetails($id)
+    {
+        $user = User::findOrFail($id);
+        $user->update([
+            'bank_name' => null,
+            'bank_account_name' => null,
+            'bank_account_number' => null,
+            'bank_country_id' => null,
+        ]);
+
+        return response()->json([
+            'message' => 'User deleted successfully',
+            'data' => $user
+        ]);
+    }
+
+
+    //user
+    public function checkBal(){
+        $amount = 500.00;
+        // Query for the highest ranked user based on total balance
+        $user1 = $this->generalService->getUserWithHighestRankOrProportion($amount, false);
+
+        // Query for a user with the 30/70 proportion
+        $user2 = $this->generalService->getUserWithHighestRankOrProportion($amount, true);
+
+        return response()->json([
+            'message' => 'User deleted successfully',
+            'data1' => $user1,
+            'data2' => $user1,
+        ]);
+    }
+
 
 }
