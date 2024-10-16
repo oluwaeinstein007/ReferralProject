@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            // Title and sub-title of the video
             $table->string('title');
             $table->string('sub_title');
             $table->string('youtube_url');
             $table->text('hidden_information')->nullable();
+            $table->boolean('is_approved')->default(0);
             $table->string('levels_id')->nullable();
             $table->enum('status', ['submitted', 'approved', 'denied'])->nullable();
             $table->enum('visibility', ['unpublished', 'private', 'public'])->nullable();

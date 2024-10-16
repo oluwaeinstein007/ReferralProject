@@ -19,7 +19,8 @@ class Product extends Model
         'visibility',
         'reward_amount',
         'view_count',
-        'user_id'
+        'user_id',
+        'is_approved'
     ];
 
     public function user()

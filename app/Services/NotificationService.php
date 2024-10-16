@@ -166,7 +166,7 @@ class NotificationService
 
         $mailDetails = [
             'greeting' => 'Hello!',
-            'recipientName' => $user['first_name'] ?? 'There',
+            'recipientName' => $user['full_name'] ?? 'There',
             'subject' => $notification['title'],
             'recipientEmail' => $user['email'],
             'intro' => $notification['body'],
@@ -183,7 +183,7 @@ class NotificationService
 
         $mailDetails = [
             'greeting' => 'Hello!',
-            'recipientName' => $user['first_name'] ?? 'There',
+            'recipientName' => $user['full_name'] ?? 'There',
             'subject' => $notification['title'],
             'recipientEmail' => $user['email'],
             'otp' => $notification['otp'],

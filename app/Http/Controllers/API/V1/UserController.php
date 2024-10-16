@@ -28,8 +28,7 @@ class UserController extends Controller
         $user_id = $user->id;
 
         $validator = Validator::make($request->all(), [
-            'first_name' => 'sometimes|required|string',
-            'last_name' => 'sometimes|required|string',
+            'full_name' => 'sometimes|required|string',
             'username' => 'sometimes|required|string',
             'gender' => 'sometimes|required|string',
             'date_of_birth' => 'sometimes|required|string',
@@ -54,7 +53,7 @@ class UserController extends Controller
             ], 404);
         }
 
-        $user->update($request->only(['first_name', 'last_name','gender', 'date_of_birth','country', 'state', 'username']));
+        $user->update($request->only(['full_name','gender', 'date_of_birth','country', 'state', 'username']));
 
         return response()->json([
             'message' => 'success',
@@ -164,18 +163,11 @@ class UserController extends Controller
 
 
     //user
-    public function checkBal(){
-        $amount = 500.00;
-        // Query for the highest ranked user based on total balance
-        $user1 = $this->generalService->getUserWithHighestRankOrProportion($amount, false);
-
-        // Query for a user with the 30/70 proportion
-        $user2 = $this->generalService->getUserWithHighestRankOrProportion($amount, true);
-
+    public function getUser(){
+        $user = auth()->user();
         return response()->json([
-            'message' => 'User deleted successfully',
-            'data1' => $user1,
-            'data2' => $user1,
+            'message' => 'User details',
+            'data' => $user
         ]);
     }
 

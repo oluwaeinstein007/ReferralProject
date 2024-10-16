@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\V1\AuthController;
 use App\Http\Controllers\API\V1\AdminController;
+use App\Http\Controllers\API\V1\PaymentController;
 use App\Http\Controllers\API\V1\ProductController;
 use App\Http\Controllers\API\V1\UserController;
 
@@ -54,17 +55,26 @@ Route::prefix('v1')->group(callback: function () {
                 Route::get('/show/{id}', [UserController::class, 'showBankDetails']);
                 Route::put('/update/{id}', [UserController::class, 'updateBankDetails']);
                 Route::delete('/delete/{id}', [UserController::class, 'deleteBankDetails']);
+                Route::get('/bank-list', [PaymentController::class, 'bankList']);
+                Route::post('/verify-account-name', [PaymentController::class, 'accountName']);
+            });
+
+
+            Route::prefix('payment')->group(function () {
+                Route::get('/get-receiver/{levelId}', [PaymentController::class, 'getReceiverAcct']);
             });
 
 
             Route::prefix('products')->group(function () {
+                Route::get('/own-products', [ProductController::class, 'getOwnProducts']);
                 Route::get('/', [ProductController::class, 'index']);
                 Route::post('/', [ProductController::class, 'store']);
                 Route::get('/{id?}', [ProductController::class, 'show']);
                 Route::put('/{id}', [ProductController::class, 'update']);
                 Route::delete('/{id}', [ProductController::class, 'destroy']);
-                Route::post('/{id}/increment-view', [ProductController::class, 'incrementViewCount']);
+                Route::get('/{id}/increment-view', [ProductController::class, 'incrementViewCount']);
                 Route::get('/filter', [ProductController::class, 'filter']);
+
             });
         });
 
@@ -76,6 +86,14 @@ Route::prefix('v1')->group(callback: function () {
                 Route::get('/{id?}', [AdminController::class, 'getLevels']);
                 Route::put('/{id}', [AdminController::class, 'updateLevel']);
                 Route::delete('/{id}', [AdminController::class, 'deleteLevel']);
+            });
+
+            Route::prefix('products')->group(function () {
+                // Route::post('/', [AdminController::class, 'createLevel']);
+                // Route::get('/{id?}', [AdminController::class, 'getLevels']);
+                // Route::put('/{id}', [AdminController::class, 'updateLevel']);
+                // Route::delete('/{id}', [AdminController::class, 'deleteLevel']);
+                Route::get('/get-products', [AdminController::class, 'adminGetProduct']);
             });
 
             Route::prefix('customer')->group(function () {

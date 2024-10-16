@@ -17,8 +17,7 @@ class UserSeeder extends Seeder
     {
         DB::table('users')->insert([
             [
-                'first_name' => 'John',
-                'last_name' => 'Doe',
+                'full_name' => 'John Doe',
                 'email' => 'admin@example.com',
                 'password' => Hash::make('password'),
                 'user_role_id' => 1,  // Admin
@@ -28,8 +27,7 @@ class UserSeeder extends Seeder
                 'updated_at' => now()
             ],
             [
-                'first_name' => 'Jane',
-                'last_name' => 'Doe',
+                'full_name' => 'Jane Doe',
                 'email' => 'moderator@example.com',
                 'password' => Hash::make('password'),
                 'user_role_id' => 2,  // Moderator
@@ -39,8 +37,7 @@ class UserSeeder extends Seeder
                 'updated_at' => now()
             ],
             [
-                'first_name' => 'Sam',
-                'last_name' => 'Smith',
+                'full_name' => 'Sam Smith',
                 'email' => 'user@example.com',
                 'password' => Hash::make('password'),
                 'user_role_id' => 3,  // Regular User

@@ -115,7 +115,14 @@ class ProductController extends Controller
 
         $products = $query->get();
         return response()->json(['message' => 'Product filter successfully', 'data' => $products], 200);
+    }
 
+
+    public function getOwnProducts() {
+        $user = auth()->user();
+        $products = Product::where('user_id', $user->id)->get();
+
+        return response()->json(['message' => 'Product fetched successfully', 'data' => $products], 200);
     }
 }
 

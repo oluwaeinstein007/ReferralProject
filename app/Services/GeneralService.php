@@ -5,6 +5,7 @@ namespace App\Services;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Level;
+use App\Models\Transaction;
 
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -34,7 +35,7 @@ class GeneralService
 
     public function generateTVAId(){
         $timeNow = (microtime(true)*10000);
-        return 'TVA'.$timeNow;
+        return 'REF'.$timeNow;
     }
 
 
@@ -52,69 +53,6 @@ class GeneralService
     public function encryptService ($value){
         $encrypt = Crypt::encryptString($value);
         return $encrypt;
-    }
-
-
-    //Upload Files to AWS
-    public function uploadFile($file, $type, $subtype, $identifier): JsonResponse|string
-    {
-        try {
-            // Determine the resource type based on the file extension
-            $resourceType = $this->getResourceType($file);
-
-            // Retrieve AWS credentials from .env file
-            $awsAccessKeyId = env('AWS_ACCESS_KEY_ID');
-            $awsSecretAccessKey = env('AWS_SECRET_ACCESS_KEY');
-            $awsRegion = env('AWS_DEFAULT_REGION', 'us-east-1');
-
-            // Upload file to AWS S3
-            $s3 = new S3Client([
-                'credentials' => [
-                    'key' => $awsAccessKeyId,
-                    'secret' => $awsSecretAccessKey,
-                ],
-                'region' => $awsRegion,
-                'version' => 'latest',
-            ]);
-
-            $bucketName = env('AWS_BUCKET');
-            $filePath = $type . '/' . $subtype . '/' . $type . "-" . $identifier . '.' . $file->getClientOriginalExtension();
-
-            $s3->putObject([
-                'Bucket' => $bucketName,
-                'Key' => $filePath,
-                'SourceFile' => $file->getRealPath(),
-                'ContentType' => $file->getMimeType(),
-                'ACL' => 'public-read',
-            ]);
-
-            // Get the URL of the uploaded file
-            $fileUrl = Storage::disk('s3')->url($filePath);
-
-            return $fileUrl;
-        } catch (AwsException $e) {
-            return response()->json(['error' => 'File upload failed. Please try again.', 'message' => $e->getMessage()], 500);
-        }
-    }
-
-
-    private function getResourceType($file): string
-    {
-        $extension = strtolower($file->getClientOriginalExtension());
-
-        // Map common file extensions to AWS S3 content types
-        $contentTypes = [
-            'jpg' => 'image/jpeg',
-            'jpeg' => 'image/jpeg',
-            'png' => 'image/png',
-            'gif' => 'image/gif',
-            'pdf' => 'application/pdf',
-            'doc' => 'application/msword',
-            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        ];
-
-        // Default to "application/octet-stream" if the extension is not explicitly mapped
-        return $contentTypes[$extension] ?? 'application/octet-stream';
     }
 
 
@@ -187,26 +125,81 @@ class GeneralService
     }
 
 
-    public function getUserWithHighestRankOrProportion($amount, $isProportion = false)
+    public function adjustRefSort($receiverId)
     {
-        if ($isProportion) {
-            $refRequired = $amount * 0.30;  // 30% of the amount
-            $taskRequired = $amount * 0.70;  // 70% of the amount
+        $nextSort = User::max('ref_sort') + 1;
+        User::where('id', $receiverId)->update(['ref_sort' => $nextSort]);
+    }
 
-            // Query for 30/70 proportion
-            $user = User::where('ref_balance', '>=', $refRequired)
-                    ->where('task_balance', '>=', $taskRequired)
-                    ->orderBy('ref_sort', 'desc')
-                    ->first();
-        } else {
-            // Query for ref_balance + task_balance >= $amount
-            $user = User::whereRaw('(ref_balance + task_balance) >= ?', [$amount])
-                    ->orderBy('ref_sort', 'desc')
-                    ->first();
+
+    // public function getAvailableReceiver($amount)
+    // {
+    //     $refRequired = $amount * 0.30;
+    //     $taskRequired = $amount * 0.70;
+
+    //     $user = User::where('ref_balance', '>=', $refRequired)
+    //                 ->where('task_balance', '>=', $taskRequired)
+    //                 ->whereNull('currently_assigned')
+    //                 ->orderBy('ref_sort', 'asc')
+    //                 ->first();
+
+    //     if ($user) {
+    //         $user->currently_assigned = true;
+    //         $user->save();
+    //     }
+
+    //     return $user;
+    // }
+
+
+    public function getOrAssignReceiver($userId, $amount)
+    {
+        $user = User::find($userId);
+
+        // $existingAssignment = $user->assignedReceivers()
+        //     ->wherePivot('payment_status', 'pending')
+        //     ->wherePivot('expires_at', '>', now())
+        //     ->first();
+
+        // if ($existingAssignment) {
+        //     return $existingAssignment;
+        // }
+
+        $refRequired = $amount * 0.30;
+        $taskRequired = $amount * 0.70;
+
+        $receiver = User::where('ref_balance', '>=', $refRequired)
+                        ->where('task_balance', '>=', $taskRequired)
+                        ->whereDoesntHave('receiverAssignments', function ($query) {
+                            $query->where('payment_status', 'pending');
+                        })
+                        ->orderBy('ref_sort', 'asc')
+                        ->first();
+
+        if ($receiver) {
+            $user->assignedReceivers()->attach($receiver->id, [
+                'expires_at' => now()->addMinutes(30),
+                'payment_status' => 'pending',
+            ]);
+
+            return $receiver;
         }
 
-        return $user;
+        return null;
     }
+
+
+    public function recordTransaction($userId, $receiverId, $amount)
+    {
+        // Record the payment in a transactions table
+        Transaction::create([
+            'user_id' => $userId,
+            'receiver_id' => $receiverId,
+            'amount' => $amount,
+            'payment_status' => 'completed'
+        ]);
+    }
+
 
 
 

@@ -10,8 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
- * @property string first_name
- * @property string last_name
+ * @property string full_name
  * @property string user_uuid
  * @property string email
  * @property string phone_number
@@ -37,8 +36,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
 
      protected $fillable = [
-        'first_name',
-        'last_name',
+        'full_name',
         'username',
         'email',
         'phone_number',
@@ -116,6 +114,20 @@ class User extends Authenticatable implements MustVerifyEmail
     public function activityLogs()
     {
         return $this->hasMany(ActivityLog::class);
+    }
+
+    public function assignedReceivers()
+    {
+        return $this->belongsToMany(User::class, 'user_receivers', 'user_id', 'receiver_id')
+                    ->withPivot('expires_at', 'payment_status')
+                    ->withTimestamps();
+    }
+
+    public function receiverAssignments()
+    {
+        return $this->belongsToMany(User::class, 'user_receivers', 'receiver_id', 'user_id')
+                    ->withPivot('expires_at', 'payment_status')
+                    ->withTimestamps();
     }
 
 }

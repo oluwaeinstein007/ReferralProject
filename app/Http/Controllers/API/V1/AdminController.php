@@ -5,10 +5,11 @@ namespace App\Http\Controllers\API\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Level;
 use App\Models\User;
+use App\Models\Product;
 use App\Models\ActivityLog;
 use App\Services\NotificationService;
 use App\Services\GeneralService;
-use App\Utilities\ActivityLogger;
+use App\Services\ActivityLogger;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -172,7 +173,7 @@ class AdminController extends Controller
         $userActivitiesQuery = ActivityLog::when($id, function ($query) use ($id) {
             return $query->where('user_id', $id);
         })
-        ->with('user:id,first_name,last_name,email,country'); // Eager load user data
+        ->with('user:id,full_name,email,country'); // Eager load user data
 
         // Get activity count and paginate results to improve efficiency
         $activityCount = $userActivitiesQuery->count();
@@ -277,4 +278,35 @@ class AdminController extends Controller
 
         return response()->json(['message' => 'Level deleted successfully'], 200);
     }
+
+
+    public function adminGetProduct(Request $request)
+    {
+        $query = Product::query();
+
+        if ($request->has('is_approved')) {
+            $query->where('is_approved', $request->is_approved);
+        }
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('visibility')) {
+            $query->where('visibility', $request->visibility);
+        }
+
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        $products = $query->get();
+        return response()->json(['message' => 'Product filter successfully', 'data' => $products], 200);
+    }
+
+
+    public function approveProduct(){}
+
+
+    public function getUnapproveProduct(){}
 }
