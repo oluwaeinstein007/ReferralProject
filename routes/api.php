@@ -74,8 +74,11 @@ Route::prefix('v1')->group(callback: function () {
                 Route::delete('/{id}', [ProductController::class, 'destroy']);
                 Route::get('/{id}/increment-view', [ProductController::class, 'incrementViewCount']);
                 Route::get('/filter', [ProductController::class, 'filter']);
+                Route::get('/{id}/generate-referral', [ProductController::class, 'generateReferralLink']);
+                Route::get('refer/{referralCode}/{productId}', [ProductController::class, 'verifyReferral']);
 
             });
+
         });
 
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
+use App\Models\User;
 
 class ProductController extends Controller
 {
@@ -123,6 +124,48 @@ class ProductController extends Controller
         $products = Product::where('user_id', $user->id)->get();
 
         return response()->json(['message' => 'Product fetched successfully', 'data' => $products], 200);
+    }
+
+
+    public function generateReferralLink($productId)
+    {
+        $referralCode = auth()->user()->referral_code;
+        $product = Product::findOrFail($productId);
+        $referralLink = url("/refer/{$referralCode}/{$product->id}");
+
+        return response()->json([
+            'message' => 'Referral link generated successfully.',
+            'referral_link' => $referralLink,
+        ]);
+    }
+
+
+    public function verifyReferral($referralCode, $productId)
+    {
+        $referrer = User::where('referral_code', $referralCode)->first();
+        $product = Product::findOrFail($productId);
+
+        if (!$referrer) {
+            return response()->json([
+                'error' => 'Invalid referral code.'
+            ], 404);
+        }
+
+        if ($product->reward_amount <= 0) {
+            return response()->json([
+                'error' => 'Product does not have a reward amount.'
+            ], 400);
+        }
+
+        $points = $product->reward_amount;
+        $referrer->task_balance += $points;
+        $referrer->save();
+
+        return response()->json([
+            'message' => 'Referral code verified and points awarded successfully.',
+            'referrer' => $referrer->full_name,
+            'new_balance' => $referrer->task_balance
+        ]);
     }
 }
 
