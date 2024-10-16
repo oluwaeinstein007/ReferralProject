@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Level;
 use App\Models\User;
 use App\Models\Product;
+use App\Models\Community;
+use App\Models\CommunityRule;
 use App\Models\ActivityLog;
 use App\Services\NotificationService;
 use App\Services\GeneralService;
@@ -309,4 +311,113 @@ class AdminController extends Controller
 
 
     public function getUnapproveProduct(){}
+
+
+    //Community Management
+    // Create a new community
+    public function createCommunity(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string',
+            'community_type' => 'required|string',
+            'description' => 'nullable|string',
+            'link' => 'required|url',
+            'rules' => 'nullable|array',
+            'rules.*' => 'string'
+        ]);
+
+        $community = Community::create($data);
+
+        if (isset($data['rules'])) {
+            foreach ($data['rules'] as $rule) {
+                CommunityRule::create([
+                    'community_id' => $community->id,
+                    'rule' => $rule,
+                ]);
+            }
+        }
+
+        return response()->json($community->load('rules'), 201);
+    }
+
+    // Show a specific community
+    public function getCommunity($id = null){
+        if ($id) {
+            $community = Community::with('rules')->findOrFail($id);
+
+            if (!$community) {
+                return response()->json(['message' => 'Level not found'], 404);
+            }
+
+            return response()->json($community, 200);
+        }
+
+        return response()->json(Community::with('rules')->get(), 200);
+    }
+
+    // Update a community
+    public function updateCommunity(Request $request, $id)
+    {
+        $data = $request->validate([
+            'name' => 'sometimes|required|string',
+            'community_type' => 'sometimes|required|string',
+            'description' => 'sometimes|string',
+            'link' => 'sometimes|required|url',
+            'rules' => 'nullable|array',
+            'rules.*' => 'string'
+        ]);
+
+        $community = Community::findOrFail($id);
+        $community->update($data);
+
+        if (isset($data['rules'])) {
+            // Delete old rules
+            $community->rules()->delete();
+
+            // Add new rules
+            foreach ($data['rules'] as $rule) {
+                CommunityRule::create([
+                    'community_id' => $community->id,
+                    'rule' => $rule,
+                ]);
+            }
+        }
+
+        return response()->json($community->load('rules'));
+    }
+
+    // Delete a community
+    public function deleteCommunity($id)
+    {
+        $community = Community::findOrFail($id);
+        $community->delete();
+        return response()->json(['message' => 'Community deleted successfully.']);
+    }
+
 }
+
+
+
+
+
+
+
+
+
+
+// app/Http/Controllers/CommunityController.php
+// namespace App\Http\Controllers;
+
+
+// use Illuminate\Http\Request;
+
+// class CommunityController extends Controller
+// {
+//     // Get all communities with rules
+//     public function index()
+//     {
+//         $communities = Community::with('rules')->get();
+//         return response()->json($communities);
+//     }
+
+//     }

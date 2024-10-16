@@ -88,6 +88,13 @@ Route::prefix('v1')->group(callback: function () {
                 Route::delete('/{id}', [AdminController::class, 'deleteLevel']);
             });
 
+            Route::prefix('communities')->group(function () {
+                Route::post('/', [AdminController::class, 'createCommunity']);
+                Route::get('/{id?}', [AdminController::class, 'getCommunity']);
+                Route::put('/{id}', [AdminController::class, 'updateCommunity']);
+                Route::delete('/{id}', [AdminController::class, 'deleteCommunity']);
+            });
+
             Route::prefix('products')->group(function () {
                 // Route::post('/', [AdminController::class, 'createLevel']);
                 // Route::get('/{id?}', [AdminController::class, 'getLevels']);

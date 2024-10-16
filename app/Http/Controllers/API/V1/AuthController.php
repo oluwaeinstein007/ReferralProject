@@ -235,7 +235,7 @@ class AuthController extends Controller
         if ($userExists) {
             return response()->json([
                 'message' => 'Username already exists'
-            ], 409); // Conflict status code
+            ], 409);
         }
 
         return response()->json([
@@ -246,10 +246,8 @@ class AuthController extends Controller
 
     public function socialAuth(Request $request)
     {
-        // Get user by email
         $user = User::where('email', $request->input('email'))->first();
 
-        //Check if user has an account
         if ($user) {
             $token = $user->createToken('authToken')->plainTextToken;
 
@@ -260,7 +258,6 @@ class AuthController extends Controller
             ], 200);
         }
 
-        //make password
         $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         $password = '';
 
@@ -310,13 +307,12 @@ class AuthController extends Controller
         if ($checkUser) {
             // user exist
             $this->generateOtp($request->email);
-            // ActivityLogger::log('User', 'User OTP', 'User has successfully requested for OTP', $checkUser->id);
             return response()->json(['message' => 'success'], 200);
         } else {
-            // ActivityLogger::log('User', 'User OTP', 'User does not exist', $checkUser->id);
             return response()->json(['message' => 'failed', 'error' => 'User does not exist'], 422);
         }
     }
+
 
     public function verifyOtp(Request $request)
     {
@@ -340,12 +336,12 @@ class AuthController extends Controller
             $user->auth_otp_expires_at = null;
 
             // Set email verification timestamp
-            $user->email_verified_at = now();
-            $user->save();
+            if($user->email_verified_at == null){
+                $user->email_verified_at = now();
+                $user->save();
+            }
 
             $token = $user->createToken('authToken')->plainTextToken;
-
-            // ActivityLogger::log('User', 'User OTP Verification', 'User has successfully verified OTP', $user->id);
 
             return response()->json([
                 'message' => 'success',
@@ -353,7 +349,6 @@ class AuthController extends Controller
                 // 'data' => $user
             ], 200);
         } catch (Exception $e) {
-            // ActivityLogger::log('User', 'User OTP Verification', $e->getMessage(), null, $request->email);
             return response()->json([
                 'status' => 'error',
                 'errors' => $e->getMessage(),
