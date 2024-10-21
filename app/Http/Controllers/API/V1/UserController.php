@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Country;
 use App\Models\Notification;
 use App\Models\User;
+use App\Models\Level;
+use App\Models\Community;
 use App\Services\ActivityLogger;
 use App\Services\GeneralService;
 use Carbon\Carbon;
@@ -91,6 +93,36 @@ class UserController extends Controller
         return response()->json([
             'message' => 'Notification status changed successfully',
         ], 200);
+    }
+
+
+    public function getLevels($id = null){
+        if ($id) {
+            $level = Level::find($id);
+
+            if (!$level) {
+                return response()->json(['message' => 'Level not found'], 404);
+            }
+
+            return response()->json($level, 200);
+        }
+
+        return response()->json(Level::all(), 200);
+    }
+
+
+    public function getCommunity($id = null){
+        if ($id) {
+            $community = Community::with('rules')->findOrFail($id);
+
+            if (!$community) {
+                return response()->json(['message' => 'Level not found'], 404);
+            }
+
+            return response()->json($community, 200);
+        }
+
+        return response()->json(Community::with('rules')->get(), 200);
     }
 
 

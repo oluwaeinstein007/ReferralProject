@@ -46,6 +46,9 @@ Route::prefix('v1')->group(callback: function () {
             Route::get('/get-notification', [UserController::class, 'getNotification'])->name('user.get-notification');
             Route::get('/change-notification-status/{id}', [UserController::class, 'changeNotificationStatus']);
 
+            Route::get('/levels/{id?}', [UserController::class, 'getLevels']);
+            Route::get('/communities/{id?}', [AdminController::class, 'getCommunity']);
+
             // Route::post('withdrawal/request', [WithdrawalController::class, 'generateWithdrawalToken']);
             // Route::post('withdrawal/verify', [WithdrawalController::class, 'verifyWithdrawalToken']);
             // Route::post('withdrawal/update', [WithdrawalController::class, 'updateWithdrawalStatus']);
@@ -67,7 +70,7 @@ Route::prefix('v1')->group(callback: function () {
 
             Route::prefix('products')->group(function () {
                 Route::get('/own-products', [ProductController::class, 'getOwnProducts']);
-                Route::get('/', [ProductController::class, 'index']);
+                // Route::get('/', [ProductController::class, 'index']);
                 Route::post('/', [ProductController::class, 'store']);
                 Route::get('/{id?}', [ProductController::class, 'show']);
                 Route::put('/{id}', [ProductController::class, 'update']);
@@ -103,7 +106,7 @@ Route::prefix('v1')->group(callback: function () {
                 // Route::get('/{id?}', [AdminController::class, 'getLevels']);
                 // Route::put('/{id}', [AdminController::class, 'updateLevel']);
                 // Route::delete('/{id}', [AdminController::class, 'deleteLevel']);
-                Route::get('/get-products', [AdminController::class, 'adminGetProduct']);
+                Route::get('/get-products/{id?}', [AdminController::class, 'adminGetProduct']);
             });
 
             Route::prefix('customer')->group(function () {

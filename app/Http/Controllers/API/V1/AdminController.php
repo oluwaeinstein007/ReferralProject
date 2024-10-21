@@ -282,9 +282,19 @@ class AdminController extends Controller
     }
 
 
-    public function adminGetProduct(Request $request)
+    public function adminGetProduct(Request $request, $id = null)
     {
         $query = Product::query();
+
+        if ($id) {
+            $product = $query->findOrFail($id);
+
+            if (!$product) {
+                return response()->json(['message' => 'Product not found'], 404);
+            }
+
+            return response()->json($product, 200);
+        }
 
         if ($request->has('is_approved')) {
             $query->where('is_approved', $request->is_approved);
@@ -340,7 +350,7 @@ class AdminController extends Controller
         return response()->json($community->load('rules'), 201);
     }
 
-    // Show a specific community
+
     public function getCommunity($id = null){
         if ($id) {
             $community = Community::with('rules')->findOrFail($id);

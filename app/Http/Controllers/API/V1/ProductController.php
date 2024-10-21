@@ -43,16 +43,18 @@ class ProductController extends Controller
     public function show($id = null)
     {
         if ($id) {
-            $product = Product::findOrFail($id);
+            $product = Product::where('is_approved', true)->where('status', 'approved')->where('visibility', 'public')->find($id);
 
             if (!$product) {
                 return response()->json(['message' => 'Product not found'], 404);
             }
 
-            return response()->json($product, 200);
+            return response()->json(['message' => 'Product List', 'data' => $product], 200);
         }
 
-        return response()->json(['message' => 'Product not found', 'data' => Product::all()], 200);
+        $product = Product::where('is_approved', true)->where('status', 'approved')->where('visibility', 'public')->get();
+
+        return response()->json(['message' => 'Product List', 'data' => $product], 200);
     }
 
 
