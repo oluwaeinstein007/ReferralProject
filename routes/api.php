@@ -117,6 +117,7 @@ Route::prefix('v1')->group(callback: function () {
                 // Route::put('/{id}', [AdminController::class, 'updateLevel']);
                 // Route::delete('/{id}', [AdminController::class, 'deleteLevel']);
                 Route::get('/get-products/{id?}', [AdminController::class, 'adminGetProduct']);
+                Route::get('/change-approval-status/{id}', [AdminController::class, 'approveProduct']);
             });
 
             Route::prefix('customer')->group(function () {

@@ -319,10 +319,27 @@ class AdminController extends Controller
     }
 
 
-    public function approveProduct(){}
+    public function approveProduct(Request $request, $id)
+    {
 
+        $status = $request->status;
+        $status = $status == 'true' ? true : false;
+        $product = Product::find($id);
 
-    public function getUnapproveProduct(){}
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        $product->is_approved = $status;
+        $product->status = $status ? 'approved' : 'denied';
+
+        $product->save();
+
+        $message = $status ? 'Product approved successfully' : 'Product rejected successfully';
+
+        return response()->json(['message' => $message, 'data' => $product], 200);
+    }
+
 
 
     //Community Management
