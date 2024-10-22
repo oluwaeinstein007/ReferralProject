@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Level;
 use App\Models\User;
 use App\Models\Product;
+use App\Models\Transaction;
 use App\Models\Community;
+use App\Models\Setting;
 use App\Models\CommunityRule;
 use App\Models\ActivityLog;
 use App\Services\NotificationService;
@@ -404,30 +406,130 @@ class AdminController extends Controller
         return response()->json(['message' => 'Community deleted successfully.']);
     }
 
+
+    public function getTransactions(Request $request) {
+        $transactionId = $request->input('transactionId');
+        $userId = $request->input('userId');
+        $userEmail = $request->input('userEmail');
+        $type = $request->input('type');
+
+        if ($transactionId) {
+            $transaction = Transaction::where('transaction_id', $transactionId)
+                ->with([
+                    'sender:id,full_name,email,phone_number,whatsapp_number',
+                    'receiver:id,full_name,email,bank_name,bank_account_name,bank_account_number,phone_number,whatsapp_number'
+                ])->first();
+
+            return $transaction
+                ? response()->json(['message' => 'Transaction fetched successfully.', 'data' => $transaction], 200)
+                : response()->json(['message' => 'Transaction not found.'], 404);
+        }
+
+        if ($userEmail) {
+            $user = User::where('email', $userEmail)->first();
+            $userId = $user->id ?? null;
+        }
+
+        if ($userId) {
+            $sendOrReceive = $type == 'incoming' ? 'sender_user_id' : 'receiver_user_id';
+            $transactions = Transaction::where($sendOrReceive, $userId)
+                ->with([
+                    'sender:id,full_name,email,phone_number,whatsapp_number',
+                    'receiver:id,full_name,email,bank_name,bank_account_name,bank_account_number,phone_number,whatsapp_number'
+                ])->get();
+
+            return $transactions->isNotEmpty()
+                ? response()->json(['message' => 'Transactions fetched successfully.', 'data' => $transactions], 200)
+                : response()->json(['message' => 'No transactions found for this user.'], 404);
+        }
+
+        $transactions = Transaction::with([
+                'sender:id,full_name,email,phone_number,whatsapp_number',
+                    'receiver:id,full_name,email,bank_name,bank_account_name,bank_account_number,phone_number,whatsapp_number'
+            ])->get();
+
+        return $transactions->isNotEmpty()
+            ? response()->json(['message' => 'Transactions fetched successfully.', 'data' => $transactions], 200)
+            : response()->json(['message' => 'No transactions found.'], 404);
+    }
+
+
+    public function changeTransactionStatus(Request $request)
+    {
+        $request->validate([
+            'transactionId' => 'required|string',
+            'status' => 'required|string|in:pending,completed,failed',
+        ]);
+        $transactionId = $request->transactionId;
+        $transaction = Transaction::where('transaction_id', $transactionId)->first();
+        if (!$transaction) {
+            return response()->json(['message' => 'Transaction not found.'], 404);
+        }
+
+        $transaction->status = $request->status;
+        $transaction->save();
+
+        return response()->json(['message' => 'Transaction status updated successfully.', 'data' => $transaction], 200);
+    }
+
+
+    public function adminSettings(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'value' => 'required',
+        ]);
+
+        $name = $request->name;
+        $value = $request->value;
+
+        // Using firstOrCreate for better efficiency and readability
+        $setting = Setting::updateOrCreate(
+            ['name' => $name],
+            ['value' => $value]
+        );
+
+        // Return a response indicating whether the setting was created or updated
+        if ($setting->wasRecentlyCreated) {
+            return response()->json(['message' => 'Setting created successfully.', 'data' => $setting], 201);
+        } else {
+            return response()->json(['message' => 'Setting updated successfully.', 'data' => $setting], 200);
+        }
+    }
+
+
+
+    public function getAdminSettings(Request $request)
+    {
+        $settings = Setting::all();
+        return response()->json(['message' => 'Settings fetched successfully.', 'data' => $settings], 200);
+    }
+
+    public function deleteAdminSetting($id)
+    {
+        $setting = Setting::find($id);
+        if (!$setting) {
+            return response()->json(['message' => 'Setting not found.'], 404);
+        }
+
+        $setting->delete();
+        return response()->json(['message' => 'Setting deleted successfully.'], 200);
+    }
+
+
+    public function updateAdminSetting(Request $request, $id)
+    {
+        $setting = Setting::find($id);
+        if (!$setting) {
+            return response()->json(['message' => 'Setting not found.'], 404);
+        }
+
+        $request->validate([
+            'value' => 'required|string',
+        ]);
+
+        $setting->update(['value' => $request->value]);
+        return response()->json(['message' => 'Setting updated successfully.', 'data' => $setting], 200);
+    }
+
 }
-
-
-
-
-
-
-
-
-
-
-// app/Http/Controllers/CommunityController.php
-// namespace App\Http\Controllers;
-
-
-// use Illuminate\Http\Request;
-
-// class CommunityController extends Controller
-// {
-//     // Get all communities with rules
-//     public function index()
-//     {
-//         $communities = Community::with('rules')->get();
-//         return response()->json($communities);
-//     }
-
-//     }

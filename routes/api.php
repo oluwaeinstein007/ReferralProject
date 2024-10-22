@@ -65,6 +65,9 @@ Route::prefix('v1')->group(callback: function () {
 
             Route::prefix('payment')->group(function () {
                 Route::get('/get-receiver/{levelId}', [PaymentController::class, 'getReceiverAcct']);
+                Route::get('/initiate', [PaymentController::class, 'initiateTransaction']);
+                Route::get('/confirm-payment', [PaymentController::class, 'confirmPayment']);
+                Route::get('/get-payment-history/{type?}', [PaymentController::class, 'getTransactionHistory']);
             });
 
 
@@ -94,6 +97,13 @@ Route::prefix('v1')->group(callback: function () {
                 Route::delete('/{id}', [AdminController::class, 'deleteLevel']);
             });
 
+            Route::prefix('settings')->group(function () {
+                Route::post('/', [AdminController::class, 'adminSettings']);
+                Route::get('/{id?}', [AdminController::class, 'getAdminSettings']);
+                Route::put('/{id}', [AdminController::class, 'updateAdminSetting']);
+                Route::delete('/{id}', [AdminController::class, 'deleteAdminSetting']);
+            });
+
             Route::prefix('communities')->group(function () {
                 Route::post('/', [AdminController::class, 'createCommunity']);
                 Route::get('/{id?}', [AdminController::class, 'getCommunity']);
@@ -117,6 +127,8 @@ Route::prefix('v1')->group(callback: function () {
                 Route::post('/restore/{id}', [AdminController::class, 'restoreUser'])->name('user.restore-account');
                 Route::post('/suspend/{id}', [AdminController::class, 'suspendUser'])->name('user.suspend-account');
                 Route::get('/analytics-month-chart', [AdminController::class, 'revenueAnalyticsChart']);
+                Route::get('/payment/get-transactions', [AdminController::class, 'getTransactions']);
+                Route::get('/payment/change-status', [AdminController::class, 'changeTransactionStatus']);
             });
         });
     });

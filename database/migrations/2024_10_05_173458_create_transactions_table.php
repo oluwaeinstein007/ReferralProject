@@ -13,19 +13,14 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            // Foreign key to the user who is sending
             $table->unsignedBigInteger('sender_user_id');
             $table->foreign('sender_user_id')->references('id')->on('users')->onDelete('cascade');
-
-            // Enum for account type where the funds are being transferred to
             $table->enum('receiver_account_type', ['ref_balance', 'task_balance', 'ref_task'])->default('ref_balance');
-
-            // Enum for status with default 'pending_payment'
-            $table->enum('status', ['pending_payment', 'pending_approval', 'completed', 'failed', 'cancelled'])->default('pending_payment');
-
-            // OTP for verification
+            $table->enum('status', ['pending_payment', 'pending_approval', 'completed', 'failed', 'cancelled', 'initiated'])->default('initiated');
             $table->integer('otp');
-
+            $table->decimal('amount', 10, 2);
+            $table->string('transaction_id')->unique();
+            $table->string('link')->unique();
             // Foreign key to the user who is receiving
             $table->unsignedBigInteger('receiver_user_id');
             $table->foreign('receiver_user_id')->references('id')->on('users')->onDelete('cascade');

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use Hamcrest\Core\Set;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use PHPUnit\Framework\Constraint\Count;
@@ -20,6 +21,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             LevelSeeder::class,
             CountrySeeder::class,
+            SettingsSeeder::class,
         ]);
 
         // User::factory()->create([

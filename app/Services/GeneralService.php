@@ -5,6 +5,7 @@ namespace App\Services;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Level;
+use App\Models\Setting;
 use App\Models\Transaction;
 
 use Illuminate\Support\Str;
@@ -132,26 +133,6 @@ class GeneralService
     }
 
 
-    // public function getAvailableReceiver($amount)
-    // {
-    //     $refRequired = $amount * 0.30;
-    //     $taskRequired = $amount * 0.70;
-
-    //     $user = User::where('ref_balance', '>=', $refRequired)
-    //                 ->where('task_balance', '>=', $taskRequired)
-    //                 ->whereNull('currently_assigned')
-    //                 ->orderBy('ref_sort', 'asc')
-    //                 ->first();
-
-    //     if ($user) {
-    //         $user->currently_assigned = true;
-    //         $user->save();
-    //     }
-
-    //     return $user;
-    // }
-
-
     public function getOrAssignReceiver($userId, $amount)
     {
         $user = User::find($userId);
@@ -165,8 +146,8 @@ class GeneralService
         //     return $existingAssignment;
         // }
 
-        $refRequired = $amount * 0.30;
-        $taskRequired = $amount * 0.70;
+        $taskRequired = Setting::where('name', 'task_percentage')->first()->value ?? 0.70;
+        $refRequired = Setting::where('name', 'ref_percentage')->first()->value ?? 0.30;
 
         $receiver = User::where('ref_balance', '>=', $refRequired)
                         ->where('task_balance', '>=', $taskRequired)
@@ -177,10 +158,10 @@ class GeneralService
                         ->first();
 
         if ($receiver) {
-            $user->assignedReceivers()->attach($receiver->id, [
-                'expires_at' => now()->addMinutes(30),
-                'payment_status' => 'pending',
-            ]);
+            // $user->assignedReceivers()->attach($receiver->id, [
+            //     'expires_at' => now()->addMinutes(30),
+            //     'payment_status' => 'pending',
+            // ]);
 
             return $receiver;
         }
@@ -189,16 +170,25 @@ class GeneralService
     }
 
 
-    public function recordTransaction($userId, $receiverId, $amount)
+    public function adjustBalance($userId, $amount)
     {
-        // Record the payment in a transactions table
-        Transaction::create([
-            'user_id' => $userId,
-            'receiver_id' => $receiverId,
-            'amount' => $amount,
-            'payment_status' => 'completed'
-        ]);
+
+        //if admin ie user id is 1
+        if($userId == 1){
+            $admin = User::find(1);
+            $admin->task_balance += $amount;
+            $admin->save();
+            return;
+        }else{
+            $taskPer = Setting::where('name', 'task_percentage')->first()->value ?? 0.70;
+            $refPer = Setting::where('name', 'ref_percentage')->first()->value ?? 0.30;
+            $user = User::find($userId);
+            $user->task_balance -= $amount * $taskPer;
+            $user->ref_balance -= $amount * $refPer;
+            $user->save();
+        }
     }
+
 
 
 
