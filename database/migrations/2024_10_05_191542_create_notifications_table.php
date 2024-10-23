@@ -21,8 +21,8 @@ return new class extends Migration
             $table->text('body');
             $table->string('status')->default('unread');
             $table->string('link')->nullable();
-            $table->foreignId('action_user_id')->constrained('users')->onDelete('cascade')->nullable();
-            $table->json('action_user')->nullable();
+            // $table->foreignId('action_user_id')->constrained('users')->onDelete('cascade')->nullable();
+            // $table->json('action_user')->nullable();
             $table->timestamps();
         });
     }

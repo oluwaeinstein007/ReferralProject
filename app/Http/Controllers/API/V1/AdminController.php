@@ -136,10 +136,10 @@ class AdminController extends Controller
         $user->update(['is_suspended' => $request->suspend, 'status' => $request->suspend ? 'suspended' : 'active', 'suspension_reason' => $request->reason ?? '', 'suspension_duration' => $request->duration ?? '', 'suspension_date' => $request->suspend ? Carbon::now() : null]);
 
         if($request->suspend){
-            $this->notificationService->userNotification($user, 'Account', 'Suspended', 'Account Suspended', 'Your account has been suspended. Reason: '.$request->reason.' Duration: '.$request->duration, true, [], '', '');
+            $this->notificationService->userNotification($user, 'Account', 'Suspended', 'Account Suspended', 'Your account has been suspended. Reason: '.$request->reason.' Duration: '.$request->duration, true);
             ActivityLogger::log('User', 'Account Suspended', 'User has been suspended. Reason: '.$request->reason.' Duration: '.$request->duration, $user->id);
         }else{
-            $this->notificationService->userNotification($user, 'Account', 'Unsuspended', 'Account Unsuspended', 'Your account has been unsuspended.', true, [], '', '');
+            $this->notificationService->userNotification($user, 'Account', 'Unsuspended', 'Account Unsuspended', 'Your account has been unsuspended.', true);
             ActivityLogger::log('User', 'Account Unsuspended', 'User has been unsuspended.', $user->id);
         }
 

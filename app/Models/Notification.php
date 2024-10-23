@@ -10,10 +10,8 @@ class Notification extends Model
     use HasFactory;
     protected $primaryKey = 'user_id';
     protected $fillable = [
-        'user_id', 'type', 'sub_type', 'title', 'body', 'status', 'link', 'action_user_id', 'action_user',
+        'user_id', 'type', 'sub_type', 'title', 'body', 'status', 'link',
     ];
-
-    protected $cast = ['action_user' => 'array'];
 
     // Define the user relationship
     public function user()

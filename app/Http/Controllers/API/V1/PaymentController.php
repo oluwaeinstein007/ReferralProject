@@ -114,7 +114,8 @@ class PaymentController extends Controller
 
 
     public function initiateTransaction(Request $request){
-        $senderId = auth()->user()->id;
+        $user = auth()->user();
+        $senderId = $user->id;
         $receiver = User::find($request->receiverId);
         $amount = Level::find($request->levelId)->amount ?? $request->amount;
         $transactionId = 'TRX' . time();
@@ -144,7 +145,8 @@ class PaymentController extends Controller
             'receiver_whatsapp' => $receiver->whatsapp_number,
         ];
 
-        // $this->notificationService->userNotification($receiver->id, 'Payment', 'Payment request', 'You have received a payment request.', 'You have received a payment request.', true, [], '', '');
+        $this->notificationService->userNotification($receiver, 'Payment', 'Payment request', 'You have received a payment request.', 'You have received a payment request from ' . $user['full_name'], true, $link, 'Confirm Payment');
+        $this->notificationService->userNotification($user, 'Payment', 'Payment request', 'Payment request sent', 'Payment request sent', true);
 
         return response()->json([
             'message' => 'OTP and Confirmation link has been generated and sent to receiver.',
@@ -167,6 +169,7 @@ class PaymentController extends Controller
         $transaction->save();
 
         $receiverId = $transaction->receiver_user_id;
+        $receiver = User::find($receiverId);
         $amount = $transaction['amount'];
 
         $this->generalService->adjustRefSort($receiverId);
@@ -186,7 +189,11 @@ class PaymentController extends Controller
         } catch (\Exception $e) {
         }
 
-        // $this->notificationService->userNotification($receiverId, 'Payment', 'Payment received', 'You have received a payment.', 'You have received a payment.', true, [], '', '');
+        $this->notificationService->userNotification($receiver, 'Payment', 'Payment received', 'Transaction Complete.', 'You have received a transaction with ID: ' . $transaction->transaction_id. ' from ' . $user['full_name'], false);
+        $this->notificationService->userNotification($user, 'Payment', 'Payment sent', 'Transaction Complete.', 'You have sent a transaction with ID: ' . $transaction->transaction_id. ' to ' . $receiver['full_name'], false);
+        $this->notificationService->userNotification($user, 'Level', 'Upranking', 'You are now in next level', 'Congratulations! You have successfully completed a transaction and you are now in the next level.', false);
+
+
         // ActivityLogger::log('Payment', 'Payment received', 'You have received a payment.', $receiverId);
 
         // $this->generalService->shareAmount($transaction->amount, $transaction->sender->level_id, $transaction->sender_user_id);

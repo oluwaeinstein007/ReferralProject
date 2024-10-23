@@ -132,10 +132,11 @@ class NotificationService
     }
 
 
-    public function userNotification($user, $type, $subType, $title, $body, $is_email = true, $commenterData, $link, $actionText = null){
-        $link = $link ?? '/';
-        $link = env('USER_FRONTEND_URL') . $link;
-        $notification = $this->storeNotification($user, $type, $subType, $title, $body, $commenterData, $link, $actionText);
+    public function userNotification($user, $type, $subType, $title, $body, $is_email = true, $link = null, $actionText = null){
+        if($link != null){
+            $link = env('USER_FRONTEND_URL') . $link;
+        }
+        $notification = $this->storeNotification($user, $type, $subType, $title, $body, $link, $actionText);
         if($is_email){
             $this->sendEmailNotification($user,$notification);
         }
@@ -143,7 +144,7 @@ class NotificationService
     }
 
 
-    public function storeNotification($user, $type, $subType, $title, $body, $commenterData, $link = null, $actionText = null){
+    public function storeNotification($user, $type, $subType, $title, $body, $link = null, $actionText = null){
         $notification = ModelsNotification::create([
             'user_id' => $user['id'],
             'type' => $type,
@@ -151,9 +152,6 @@ class NotificationService
             'title' => $title,
             'body' => $body,
             'link' => $link,
-            'action_user_id' => $commenterData['id']?? $user['id'],
-            // 'action_user' => $commenterData
-            'action_user' => json_encode($commenterData)
         ]);
         //merge actionText
         $notification['actionText'] = $actionText;

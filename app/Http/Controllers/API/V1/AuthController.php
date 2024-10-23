@@ -135,6 +135,7 @@ class AuthController extends Controller
             'referral_code' => $RefCode,
             'referred_by_user_id_1' => $referral_info['referred_by_user_id_1'] ?? null,
             'referred_by_user_id_2' => $referral_info['referred_by_user_id_2'] ?? null,
+            'ref_sort' => User::max('ref_sort') + 1,
             'username' => $username,
             'user_role_id' => 2,
         ]);
@@ -277,6 +278,7 @@ class AuthController extends Controller
             'referral_code' => $RefCode,
             'is_social' => true,
             'social_type' => $request->social_type,
+            'ref_sort' => User::max('ref_sort') + 1,
             'username' => $username,
         ]);
 

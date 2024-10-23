@@ -24,7 +24,7 @@ return new class extends Migration
 
             $table->float('ref_balance', 10, 2)->default(0.00);
             $table->float('task_balance', 10, 2)->default(0.00);
-            $table->tinyInteger('ref_sort', 10, 2)->nullable();
+            $table->integer('ref_sort')->nullable();
 
             $table->string('frozen_page_url')->nullable();
 
