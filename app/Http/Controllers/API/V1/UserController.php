@@ -203,7 +203,7 @@ class UserController extends Controller
 
         //get level name and attach to user
         $level = Level::find($user->level_id);
-        $user->level_name = $level->name;
+        $user->level_name = $level->name ?? 'No Level Yet';
 
         return response()->json([
             'message' => 'User details',
