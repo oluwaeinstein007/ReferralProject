@@ -8,6 +8,9 @@ use App\Http\Controllers\API\V1\PaymentController;
 use App\Http\Controllers\API\V1\ProductController;
 use App\Http\Controllers\API\V1\UserController;
 
+//import admin middleware
+use App\Http\Middleware\Admin;
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
@@ -89,7 +92,7 @@ Route::prefix('v1')->group(callback: function () {
 
 
 
-        Route::prefix('admin')->group(function () {
+        Route::middleware([Admin::class])->prefix('admin')->group(function () {
             Route::prefix('levels')->group(function () {
                 Route::post('/', [AdminController::class, 'createLevel']);
                 Route::get('/{id?}', [AdminController::class, 'getLevels']);
