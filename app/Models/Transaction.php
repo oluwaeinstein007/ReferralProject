@@ -17,6 +17,7 @@ class Transaction extends Model
         'amount',
         'transaction_id',
         'link',
+        'level_id',
         'receiver_user_id',
         'description',
     ];

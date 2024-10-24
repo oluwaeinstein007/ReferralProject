@@ -116,9 +116,8 @@ class GeneralService
             $adminShare += $referrer2Share;
         }
 
-        // Update admin balance
-        // Assuming you have a method to get the admin user, replace `1` with your admin user ID
-        $admin = User::find(1); // Change this to your actual admin ID
+        $defaultAdminId = Setting::where('name', 'default_admin_id')->first()->value ?? 1;
+        $admin = User::find($defaultAdminId);
         if ($admin) {
             $admin->balance += $adminShare;
             $admin->save();

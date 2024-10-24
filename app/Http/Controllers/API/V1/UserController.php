@@ -71,8 +71,6 @@ class UserController extends Controller
         $notifications = Notification::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
         $notifications = $notifications->forPage($page, $perPage);
 
-        // ActivityLogger::log('User', 'User Notification', 'A new visa application has been made', $user->user_uuid);
-
         return response()->json([
             'message' => 'success',
             'data' => $notifications,
@@ -107,7 +105,12 @@ class UserController extends Controller
             return response()->json($level, 200);
         }
 
-        return response()->json(Level::all(), 200);
+        //get all levels except one in the user status
+        $user = auth()->user();
+        $level = Level::where('id', '!=', $user->level_id)->get();
+        // $level = Level::all();
+
+        return response()->json($level, 200);
     }
 
 
@@ -197,6 +200,11 @@ class UserController extends Controller
     //user
     public function getUser(){
         $user = auth()->user();
+
+        //get level name and attach to user
+        $level = Level::find($user->level_id);
+        $user->level_name = $level->name;
+
         return response()->json([
             'message' => 'User details',
             'data' => $user

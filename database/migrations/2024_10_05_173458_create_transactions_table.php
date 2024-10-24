@@ -25,6 +25,10 @@ return new class extends Migration
             $table->unsignedBigInteger('receiver_user_id');
             $table->foreign('receiver_user_id')->references('id')->on('users')->onDelete('cascade');
 
+            // Level id to hold the level of the transaction
+            $table->unsignedBigInteger('level_id')->nullable();
+            $table->foreign('level_id')->references('id')->on('levels')->onDelete('cascade');
+
             // Description field to hold any additional details about the transaction
             $table->string('description')->nullable();
             $table->timestamp('deleted_at')->nullable();

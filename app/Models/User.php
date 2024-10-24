@@ -63,6 +63,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'auth_otp_expires_at',
         'payment_otp',
         'payment_otp_expires_at',
+        'ongoing_transaction',
         'referral_code',
         'referred_by_user_id_1',
         'referred_by_user_id_2',

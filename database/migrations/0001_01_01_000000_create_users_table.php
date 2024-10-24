@@ -53,6 +53,8 @@ return new class extends Migration
             $table->string('referred_by_user_id_2')->nullable();
             $table->boolean('referral_code_used')->default(0);
 
+            $table ->boolean('ongoing_transaction')->default(0);
+
             $table->string('social_type')->nullable();
             $table->boolean('is_social')->default(0);
             $table->boolean('is_suspended')->default(0);

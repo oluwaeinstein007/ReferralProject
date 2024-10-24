@@ -67,6 +67,8 @@ class PaymentController extends Controller
         // If the receiver assignment has expired, update the pivot table status to 'expired'
         if ($receiverAssignment && $receiverAssignment->pivot->expires_at <= now()) {
             $user->assignedReceivers()->updateExistingPivot($receiverAssignment->id, ['payment_status' => 'expired']);
+            //detach the expired receiver
+            $user->assignedReceivers()->detach($receiverAssignment->id);
             $receiverAssignment = null;
         }
 
@@ -83,8 +85,8 @@ class PaymentController extends Controller
             } else {
                 // Fallback to a default receiver, e.g., admin
                 $defaultAdminId = Setting::where('name', 'default_admin_id')->first()->value ?? 1;
-                $receiver = User::where('user_role_id', $defaultAdminId)->first();
-                $user = $receiver;
+                $receiver = User::find($defaultAdminId);
+                // $user = $receiver;
                 $user->assignedReceivers()->attach($receiver->id, [
                     'expires_at' => now()->addMinutes(30),
                     'payment_status' => 'pending'
@@ -120,7 +122,7 @@ class PaymentController extends Controller
         $amount = Level::find($request->levelId)->amount ?? $request->amount;
         $transactionId = 'TRX' . time();
         $otp = mt_rand(100000, 999999);
-        $baseUrlFE = env('BASE_URL_FE');
+        $baseUrlFE = env('FRONTEND_BASE_URL');
         $link = $baseUrlFE . '/confirm-payment/' . $transactionId . '/' . $otp;
 
         Transaction::create([
@@ -128,6 +130,7 @@ class PaymentController extends Controller
             'receiver_user_id' => $receiver->id,
             'amount' => $amount,
             'status' => 'initiated',
+            'level_id' => $request->levelId,
             'otp' => $otp,
             'link' => $link,
             'transaction_id' => $transactionId
@@ -145,8 +148,20 @@ class PaymentController extends Controller
             'receiver_whatsapp' => $receiver->whatsapp_number,
         ];
 
-        $this->notificationService->userNotification($receiver, 'Payment', 'Payment request', 'You have received a payment request.', 'You have received a payment request from ' . $user['full_name'], true, $link, 'Confirm Payment');
-        $this->notificationService->userNotification($user, 'Payment', 'Payment request', 'Payment request sent', 'Payment request sent', true);
+        $user->ongoing_transaction = true;
+        $user->save();
+
+        $receiver->ongoing_transaction = true;
+        $receiver->save();
+
+        try{
+            // $this->notificationService->sendOTPNotification($receiver, 'Payment', 'Payment request', 'Payment request', 'You have received a payment request.', 'You have received a payment request from ' . $user['full_name'], true, $otp);
+            $this->notificationService->userNotification($receiver, 'Payment', 'Payment request', 'You have received a payment request.', 'You have received a payment request from ' . $user['full_name'], true, $link, 'Confirm Payment');
+        }catch(\Exception $e){
+            // Log::error($e->getMessage());
+        }
+        $this->notificationService->userNotification($user, 'Payment', 'Payment request', 'Payment request sent', 'Payment request sent', false);
+        ActivityLogger::log('Payment', 'Payment request', 'Payment request sent from ' . $user['full_name'] . ' to ' . $receiver['full_name'] . ' with transaction ID: ' . $transactionId, $senderId);
 
         return response()->json([
             'message' => 'OTP and Confirmation link has been generated and sent to receiver.',
@@ -191,10 +206,16 @@ class PaymentController extends Controller
 
         $this->notificationService->userNotification($receiver, 'Payment', 'Payment received', 'Transaction Complete.', 'You have received a transaction with ID: ' . $transaction->transaction_id. ' from ' . $user['full_name'], false);
         $this->notificationService->userNotification($user, 'Payment', 'Payment sent', 'Transaction Complete.', 'You have sent a transaction with ID: ' . $transaction->transaction_id. ' to ' . $receiver['full_name'], false);
+        ActivityLogger::log('Payment', 'Transaction Complete', 'The transaction with ID: ' . $transaction->transaction_id . ' has been completed, initiated by ' . $user['full_name'] . ' and received by ' . $receiver['full_name'], $receiverId);
+
+        // update user level
+        $user->level_id = $transaction->level_id;
+        $user->ongoing_transaction = false;
+        $user->save();
+        $receiver->ongoing_transaction = false;
+        $receiver->save();
         $this->notificationService->userNotification($user, 'Level', 'Upranking', 'You are now in next level', 'Congratulations! You have successfully completed a transaction and you are now in the next level.', false);
-
-
-        // ActivityLogger::log('Payment', 'Payment received', 'You have received a payment.', $receiverId);
+        ActivityLogger::log('Level', 'Upranking', 'User ' . $user['full_name'] . ' has been upranked to the next level' . Level::find($transaction->level_id)->name, $user->id);
 
         // $this->generalService->shareAmount($transaction->amount, $transaction->sender->level_id, $transaction->sender_user_id);
         return response()->json(['message' => 'Payment confirmed successfully.'], 200);

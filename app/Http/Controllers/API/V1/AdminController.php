@@ -486,6 +486,25 @@ class AdminController extends Controller
         $transaction->status = $request->status;
         $transaction->save();
 
+        if($transaction->status == 'completed'){
+            $user = User::find($transaction->receiver_user_id);
+            $receiver = User::find($transaction->sender_user_id);
+            $this->generalService->adjustBalance($transaction->receiver_user_id, $transaction->amount);
+            $this->generalService->adjustRefSort($transaction->receiver_user_id);
+            $this->notificationService->userNotification($receiver, 'Payment', 'Payment received', 'Transaction Complete.', 'You have received a transaction with ID: ' . $transaction->transaction_id. ' from ' . $user['full_name'], false);
+            $this->notificationService->userNotification($user, 'Payment', 'Payment sent', 'Transaction Complete.', 'You have sent a transaction with ID: ' . $transaction->transaction_id. ' to ' . $receiver['full_name'], false);
+            ActivityLogger::log('Payment', 'Transaction Complete', 'The transaction with ID: ' . $transaction->transaction_id . ' has been completed, initiated by ' . $user['full_name'] . ' and received by ' . $receiver['full_name'], $receiver->id);
+
+            // update user level
+            $user->level_id = $transaction->level_id;
+            $user->ongoing_transaction = false;
+            $user->save();
+            $receiver->ongoing_transaction = false;
+            $receiver->save();
+            $this->notificationService->userNotification($user, 'Level', 'Upranking', 'You are now in next level', 'Congratulations! You have successfully completed a transaction and you are now in the next level.', false);
+            ActivityLogger::log('Level', 'Upranking', 'User ' . $user['full_name'] . ' has been upranked to the next level' . Level::find($transaction->level_id)->name, $user->id);
+        }
+
         return response()->json(['message' => 'Transaction status updated successfully.', 'data' => $transaction], 200);
     }
 

@@ -56,12 +56,9 @@ class AuthController extends Controller
 
         if ($referral) {
             $referred_by_user_id_1 = $referral->id;
-
-            if ($referral->referral_by) {
-                $referral_level_2 = User::find($referral->referral_by);
-                if ($referral_level_2) {
-                    $referred_by_user_id_2 = $referral_level_2->id;
-                }
+            $grand_referral = User::find($referral->referred_by_user_id_1);
+            if ($grand_referral) {
+                $referred_by_user_id_2 = $grand_referral->id;
             }
         }
 
