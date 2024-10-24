@@ -217,7 +217,7 @@ class PaymentController extends Controller
         $this->notificationService->userNotification($user, 'Level', 'Upranking', 'You are now in next level', 'Congratulations! You have successfully completed a transaction and you are now in the next level.', false);
         ActivityLogger::log('Level', 'Upranking', 'User ' . $user['full_name'] . ' has been upranked to the next level' . Level::find($transaction->level_id)->name, $user->id);
 
-        // $this->generalService->shareAmount($transaction->amount, $transaction->sender->level_id, $transaction->sender_user_id);
+        $this->generalService->shareAmount($transaction->amount, $transaction->sender->level_id, $transaction->sender_user_id);
         return response()->json(['message' => 'Payment confirmed successfully.'], 200);
     }
 

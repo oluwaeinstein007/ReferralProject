@@ -73,7 +73,8 @@ class GeneralService
 
         // Check if level exists
         if (!$level) {
-            throw new \Exception('Level not found');
+            // throw new \Exception('Level not found');
+            return;
         }
 
         // Calculate percentages
@@ -90,7 +91,7 @@ class GeneralService
             // Add share to referrer 1's balance
             $referrer1 = User::find($referrer1Id);
             if ($referrer1) {
-                $referrer1->balance += $referrer1Share;
+                $referrer1->ref_balance += $referrer1Share;
                 $referrer1->save();
             } else {
                 // If referrer 1 doesn't exist, add to admin balance
@@ -105,7 +106,7 @@ class GeneralService
             // Add share to referrer 2's balance
             $referrer2 = User::find($referrer2Id);
             if ($referrer2) {
-                $referrer2->balance += $referrer2Share;
+                $referrer2->ref_balance += $referrer2Share;
                 $referrer2->save();
             } else {
                 // If referrer 2 doesn't exist, add to admin balance
@@ -119,7 +120,7 @@ class GeneralService
         $defaultAdminId = Setting::where('name', 'default_admin_id')->first()->value ?? 1;
         $admin = User::find($defaultAdminId);
         if ($admin) {
-            $admin->balance += $adminShare;
+            $admin->ref_balance += $adminShare;
             $admin->save();
         }
     }
